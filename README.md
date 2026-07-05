@@ -18,8 +18,10 @@ source /Users/hsi/.config/fish/aliases.fish
 - `cfg`: open the Git-focused Fish alias config in VS Code
 - `debun`: kill Bun dev server processes started as `bun dev` or `bun run dev`
 - `setcur "Project folder Name"`: create or update a symlink at `/Users/hsi/Projects/Current/Project folder Name`
+- `decur "Project folder Name"`: remove a symlink at `/Users/hsi/Projects/Current/Project folder Name`
 
 `setcur` searches for an exact folder name under `/Users/hsi/Projects`, skips `/Users/hsi/Projects/Current`, and refuses to replace a real folder with a symlink.
+`decur` removes only symlinks under `/Users/hsi/Projects/Current` and refuses to remove real folders or files.
 
 Examples:
 
@@ -27,4 +29,5 @@ Examples:
 setcur Comux
 setcur "Project folder Name"
 setcur /Users/hsi/Projects/DevTools/fish-alias
+decur Comux
 ```
