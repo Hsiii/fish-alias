@@ -17,9 +17,27 @@ source /Users/hsi/.config/fish/aliases.fish
 - `cf`: open this general Fish alias config in VS Code
 - `cfg`: open the Git-focused Fish alias config in VS Code
 - `debun`: kill Bun dev server processes started as `bun dev` or `bun run dev`
+- `trycf [port] [project-name]`: expose a local dev server through Cloudflare Tunnel
 - `setcur "Project folder Name"`: create or update a symlink at `/Users/hsi/Projects/Current/Project folder Name`
 - `decur "Project folder Name"`: remove a symlink at `/Users/hsi/Projects/Current/Project folder Name`
 - `lscur`: list symlinks under `/Users/hsi/Projects/Current`
+
+`trycf` defaults to port `3000` and the current folder name. It starts a Cloudflare Quick Tunnel, prints the generated `trycloudflare.com` URL, and copies it to the clipboard. Install the dependency first with `brew install cloudflared`.
+
+`trycf` also prepares a stable dev alias like `https://dev.hsichen.dev/homepage`. Set `TRYCF_REGISTER_URL` to a registrar endpoint if you want the function to POST the generated quick tunnel URL there:
+
+```fish
+set -Ux TRYCF_REGISTER_URL https://dev.hsichen.dev/__trycf/register
+set -Ux TRYCF_REGISTER_TOKEN your-token
+```
+
+The registrar receives:
+
+```json
+{"project":"homepage","target":"https://example.trycloudflare.com","origin":"http://localhost:3000"}
+```
+
+You can override the displayed stable base URL with `TRYCF_DEV_BASE`.
 
 `setcur` searches for an exact folder name under `/Users/hsi/Projects`, skips `/Users/hsi/Projects/Current`, and refuses to replace a real folder with a symlink.
 `decur` removes only symlinks under `/Users/hsi/Projects/Current` and refuses to remove real folders or files.
@@ -28,6 +46,8 @@ source /Users/hsi/.config/fish/aliases.fish
 Examples:
 
 ```fish
+trycf
+trycf 5173 Atomize
 setcur Comux
 setcur "Project folder Name"
 setcur /Users/hsi/Projects/DevTools/fish-alias
