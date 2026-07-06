@@ -2,7 +2,7 @@
 
 Personal [Fish](https://fishshell.com/) aliases and helper functions that are not Git-specific.
 
-This repo is a public mirror of my dotfiles-local general alias config. On my machine, `config.fish` is a symlink to `/Users/hsi/.config/fish/aliases.fish`.
+This repo owns my general alias config. On my machine, `/Users/hsi/.config/fish/aliases.fish` is a symlink to this repo's `config.fish`.
 
 ## Combine with your own config
 
