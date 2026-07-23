@@ -143,6 +143,23 @@ if status is-interactive
             /srv/sago-cloud/operations/scripts/pr-media-token revoke "$name"
     end
 
+    function prmedia --description 'Add or delete PR media access'
+        if test (count $argv) -ne 2
+            echo 'usage: prmedia -a|-d name' >&2
+            return 1
+        end
+
+        switch $argv[1]
+            case -a
+                prmedia-onboard $argv[2]
+            case -d
+                prmedia-revoke $argv[2]
+            case '*'
+                echo 'usage: prmedia -a|-d name' >&2
+                return 1
+        end
+    end
+
     function trycf --description 'Expose the current project with Cloudflare Tunnel'
         set -l port 3000
         set -l project_name (basename (pwd))
