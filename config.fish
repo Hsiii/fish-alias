@@ -117,6 +117,11 @@ if status is-interactive
         end
 
         printf '%s\n' $token_output
+        printf '\nManual setup for your friend:\n'
+        printf '  mkdir -p ~/.config/pr-media && chmod 700 ~/.config/pr-media\n'
+        printf '  vim ~/.config/pr-media/config\n'
+        printf '  chmod 600 ~/.config/pr-media/config\n'
+        printf 'Paste the url= and token= lines above into that config file.\n'
         printf '\nSetup script: %s\n' "$setup_path"
         printf 'Send it securely. Your friend runs: bash %s\n' (basename "$setup_path")
         printf 'The script contains the token, so both of you should delete it after setup.\n'
