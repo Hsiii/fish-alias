@@ -47,7 +47,9 @@ file to your friend securely. They run it with Bash to install the credentials
 at `~/.config/pr-media/config`; it refuses to overwrite an existing config and
 checks whether the uploader from `Hsiii/human-out-of-loop` is already
 available. The setup file contains the access token, so both copies should be
-deleted after it succeeds.
+deleted after it succeeds. The command also prints the destination and
+permissions for friends who prefer to paste the `url=` and `token=` lines
+manually with an editor.
 
 Use `prmedia-revoke alice` to disable Alice's token without affecting anyone
 else.
