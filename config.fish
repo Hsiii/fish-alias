@@ -8,6 +8,65 @@ if status is-interactive
     # Kill Bun dev server processes started with either command form.
     abbr -a debun 'pkill -f "bun dev"; pkill -f "bun run dev"'
 
+    # Remove Codex worktrees registered to the current repository.
+    function detree
+        argparse 'f/force' -- $argv
+        or return
+
+        if test (count $argv) -gt 0
+            echo 'detree: expected no arguments' >&2
+            return 1
+        end
+
+        git rev-parse --git-dir >/dev/null 2>&1
+        or begin
+            echo 'detree: not inside a Git repository' >&2
+            return 1
+        end
+
+        set -l codex_home ~/.codex
+        if set -q CODEX_HOME
+            set codex_home $CODEX_HOME
+        end
+        set -l codex_worktree_root (path resolve $codex_home/worktrees)
+        if test -z "$codex_worktree_root"
+            echo 'detree: no Codex worktree directory found'
+            return 0
+        end
+
+        set -l codex_worktrees
+        for worktree in (git worktree list --porcelain | string match 'worktree *' | string replace 'worktree ' '')
+            if string match -q -- "$codex_worktree_root/*" "$worktree"
+                set -a codex_worktrees $worktree
+            end
+        end
+
+        if test (count $codex_worktrees) -eq 0
+            echo 'detree: no Codex worktrees for this repository'
+            return 0
+        end
+
+        set -l remove_args
+        if set -q _flag_force
+            set remove_args --force
+        end
+
+        set -l failed 0
+        for worktree in $codex_worktrees
+            echo "detree: removing $worktree"
+            git worktree remove $remove_args -- $worktree
+            or set failed 1
+        end
+
+        if test $failed -ne 0
+            if not set -q _flag_force
+                echo 'detree: some worktrees were kept; use --force to remove dirty worktrees' >&2
+            end
+        end
+
+        return $failed
+    end
+
     function __prmedia_add --description 'Create PR media access for a friend'
         if test (count $argv) -ne 1
             echo 'usage: prmedia -a name' >&2

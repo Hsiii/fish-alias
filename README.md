@@ -17,6 +17,7 @@ source /Users/hsi/.config/fish/aliases.fish
 - `cf`: open this general Fish alias config in VS Code
 - `cfg`: open the Git-focused Fish alias config in VS Code
 - `debun`: kill Bun dev server processes started as `bun dev` or `bun run dev`
+- `detree`: remove Codex worktrees registered to the current repository; pass `--force` to include dirty worktrees
 - `prmedia -a name`: create a revocable PR-media token and setup script for a friend
 - `prmedia -d name`: revoke a friend's PR-media token
 - `prmedia -l`: list active PR-media token names
