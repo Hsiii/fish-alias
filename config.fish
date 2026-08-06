@@ -8,6 +8,9 @@ if status is-interactive
     # Kill Bun dev server processes started with either command form.
     abbr -a debun 'pkill -f "bun dev"; pkill -f "bun run dev"'
 
+    # Deploy the current project with Bun.
+    abbr -a dp 'bun run deploy'
+
     # Remove Codex worktrees registered to the current repository.
     function detree
         argparse 'f/force' -- $argv
