@@ -237,6 +237,153 @@ if status is-interactive
         end
     end
 
+    function media --description 'Upload media for sharing'
+        if test (count $argv) -ne 2; or test "$argv[1]" != add
+            echo 'usage: media add <path>' >&2
+            return 1
+        end
+        set -l source_path (path resolve $argv[2])
+        if not test -f "$source_path"
+            echo "media: file not found: $argv[2]" >&2
+            return 1
+        end
+
+        set -l upload_path "$source_path"
+        set -l temporary_directory
+        set -l video_limit 536870912
+        set -l extension (string lower -- (path extension "$source_path" | string trim --chars=.))
+        set -l file_size (command stat -f %z "$source_path" 2>/dev/null)
+        if test $status -ne 0
+            set file_size (command stat -c %s "$source_path" 2>/dev/null)
+        end
+
+        set -l needs_conversion 0
+        if contains -- "$extension" mov m4v
+            set needs_conversion 1
+        else if contains -- "$extension" mp4; and test "$file_size" -gt "$video_limit"
+            set needs_conversion 1
+        end
+
+        if test $needs_conversion -eq 1
+            if not type -q avconvert
+                echo 'media: avconvert is required to prepare this video' >&2
+                return 127
+            end
+
+            set -l temporary_root /tmp
+            if set -q TMPDIR
+                set temporary_root (string trim --right --chars=/ -- "$TMPDIR")
+            end
+            set temporary_directory (command mktemp -d "$temporary_root/media-upload.XXXXXX")
+            or return
+            set upload_path "$temporary_directory/upload.m4v"
+
+            command avconvert \
+                --source "$source_path" \
+                --preset PresetAppleM4V720pHD \
+                --output "$upload_path" \
+                --progress
+            set -l convert_status $status
+            if test $convert_status -ne 0
+                command rm -rf -- "$temporary_directory"
+                return $convert_status
+            end
+
+            set file_size (command stat -f %z "$upload_path" 2>/dev/null)
+            if test "$file_size" -gt "$video_limit"
+                command rm -f -- "$upload_path"
+                command avconvert \
+                    --source "$source_path" \
+                    --preset Preset960x540 \
+                    --output "$upload_path" \
+                    --progress
+                set convert_status $status
+                if test $convert_status -ne 0
+                    command rm -rf -- "$temporary_directory"
+                    return $convert_status
+                end
+            end
+        end
+
+        set extension (string lower -- (path extension "$upload_path" | string trim --chars=.))
+        set -l source_extension "$extension"
+        if test "$extension" = m4v
+            set extension mp4
+        end
+        switch $extension
+            case gif jpeg jpg mp4 png webm webp
+            case '*'
+                echo 'media: supported formats are PNG, JPEG, GIF, WebP, MP4, and WebM' >&2
+                if test -n "$temporary_directory"
+                    command rm -rf -- "$temporary_directory"
+                end
+                return 1
+        end
+
+        set -l upload_id (string lower -- (command uuidgen))
+        set -l remote_input_path "/tmp/media-upload-$upload_id.$source_extension"
+        set -l remote_path "/tmp/media-upload-$upload_id.$extension"
+        command ssh sago-cloud \
+            docker exec -i sago-cloud-pr-media-api-api-1 \
+            tee "$remote_input_path" <"$upload_path" >/dev/null
+        set -l stream_status $status
+        if test $stream_status -ne 0
+            if test -n "$temporary_directory"
+                command rm -rf -- "$temporary_directory"
+            end
+            return $stream_status
+        end
+
+        if test "$source_extension" = m4v
+            command ssh sago-cloud \
+                docker exec sago-cloud-pr-media-api-api-1 \
+                ffmpeg -loglevel error -y \
+                -i "$remote_input_path" -c copy -movflags +faststart "$remote_path"
+            set -l remux_status $status
+            command ssh sago-cloud \
+                docker exec sago-cloud-pr-media-api-api-1 \
+                rm -f -- "$remote_input_path"
+            if test $remux_status -ne 0
+                if test -n "$temporary_directory"
+                    command rm -rf -- "$temporary_directory"
+                end
+                return $remux_status
+            end
+        end
+
+        set -l docker_env -e "PR_MEDIA_MAX_VIDEO_BYTES=$video_limit"
+        if test -n "$temporary_directory"
+            set -a docker_env -e PR_MEDIA_OPTIMIZE=0
+        end
+        set -l upload_output (
+            command ssh sago-cloud \
+                docker exec $docker_env \
+                sago-cloud-pr-media-api-api-1 \
+                /usr/local/bin/pr-media-upload "$remote_path"
+        )
+        set -l upload_status $status
+        command ssh sago-cloud \
+            docker exec sago-cloud-pr-media-api-api-1 \
+            rm -f -- "$remote_input_path" "$remote_path"
+        if test -n "$temporary_directory"
+            command rm -rf -- "$temporary_directory"
+        end
+
+        if test $upload_status -eq 0
+            set -l media_url (string match -r 'https://[^)]+' -- $upload_output)
+            if test -n "$media_url"
+                printf '%s\n' "$media_url"
+                if type -q pbcopy
+                    printf '%s' "$media_url" | pbcopy
+                    echo 'media: copied URL to clipboard' >&2
+                end
+            else
+                printf '%s\n' $upload_output
+            end
+        end
+        return $upload_status
+    end
+
     function trycf --description 'Expose the current project with Cloudflare Tunnel'
         set -l port 3000
         set -l project_name (basename (pwd))
