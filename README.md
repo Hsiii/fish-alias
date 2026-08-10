@@ -21,6 +21,7 @@ source /Users/hsi/.config/fish/aliases.fish
 - `prmedia -a name`: create a revocable PR-media token and setup script for a friend
 - `prmedia -d name`: revoke a friend's PR-media token
 - `prmedia -l`: list active PR-media token names
+- `media add <path>`: upload an image or short video for sharing and copy its URL
 - `trycf [port] [project-name]`: expose a local dev server through Cloudflare Tunnel
 - `setcur "Project folder Name"`: create or update a symlink at `/Users/hsi/Projects/Current/Project folder Name`
 - `decur "Project folder Name"`: remove a symlink at `/Users/hsi/Projects/Current/Project folder Name`
@@ -56,6 +57,13 @@ manually with an editor.
 Use `prmedia -d alice` to disable Alice's token without affecting anyone else.
 Use `prmedia -l` to list active token names.
 
+`media add <path>` uploads directly to the Oracle media host over SSH and copies
+the public URL to the clipboard. MOV and oversized MP4 videos are converted to
+720p with macOS `avconvert` before upload. This private SSH path accepts videos
+up to 500 MiB; the public API's smaller limit is unchanged. Standalone media is
+unreferenced and may be evicted if the media filesystem reaches its cleanup
+watermark.
+
 `setcur` searches for an exact folder name under `/Users/hsi/Projects`, skips `/Users/hsi/Projects/Current`, and refuses to replace a real folder with a symlink.
 `decur` removes only symlinks under `/Users/hsi/Projects/Current` and refuses to remove real folders or files.
 `lscur` prints current project symlinks as `name -> target`.
@@ -68,6 +76,7 @@ trycf 5173 Atomize
 prmedia -a alice
 prmedia -d alice
 prmedia -l
+media add ~/Downloads/demo.mov
 setcur Comux
 setcur "Project folder Name"
 setcur /Users/hsi/Projects/DevTools/fish-alias
