@@ -20,11 +20,11 @@ source /Users/hsi/.config/fish/aliases.fish
 - `prmedia -d name`: revoke a friend's PR-media token
 - `prmedia -l`: list active PR-media token names
 - `media add <path>`: upload an image or short video for sharing and copy its URL
-- `trycf [port] [project-name]`: expose a local dev server through Cloudflare Tunnel
+- `forward [port]`: expose a local dev server through Cloudflare Tunnel
 
-`trycf` defaults to port `3000` and the current folder name. It starts a Cloudflare Quick Tunnel, prints the generated `trycloudflare.com` URL, and copies it to the clipboard. Install the dependency first with `brew install cloudflared`.
+`forward` defaults to port `3000`. It uses the Git repository name, even inside a linked worktree, or falls back to the current folder name outside Git. It starts a Cloudflare Quick Tunnel, prints the generated `trycloudflare.com` URL, and copies it to the clipboard. Install the dependency first with `brew install cloudflared`.
 
-`trycf` also prepares a stable dev alias like `https://dev.hsichen.dev/homepage`. Set `TRYCF_REGISTER_URL` to a registrar endpoint if you want the function to POST the generated quick tunnel URL there:
+`forward` also prepares a stable dev alias like `https://dev.hsichen.dev/homepage`. Set `TRYCF_REGISTER_URL` to a registrar endpoint if you want the function to POST the generated quick tunnel URL there:
 
 ```fish
 set -Ux TRYCF_REGISTER_URL https://dev.hsichen.dev/__trycf/register
@@ -62,8 +62,8 @@ watermark.
 Examples:
 
 ```fish
-trycf
-trycf 5173 Atomize
+forward
+forward 5173
 prmedia -a alice
 prmedia -d alice
 prmedia -l

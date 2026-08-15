@@ -334,12 +334,20 @@ if status is-interactive
         return $upload_status
     end
 
-    function trycf --description 'Expose the current project with Cloudflare Tunnel'
+    function forward --description 'Expose the current project with Cloudflare Tunnel'
         set -l port 3000
         set -l project_name (basename (pwd))
 
-        if test (count $argv) -gt 2
-            echo 'usage: trycf [port] [project-name]' >&2
+        set -l git_common_dir (command git rev-parse --git-common-dir 2>/dev/null)
+        if test $status -eq 0
+            set git_common_dir (path resolve "$git_common_dir")
+            if test (path basename "$git_common_dir") = .git
+                set project_name (path basename (path dirname "$git_common_dir"))
+            end
+        end
+
+        if test (count $argv) -gt 1
+            echo 'usage: forward [port]' >&2
             return 1
         end
 
@@ -347,12 +355,8 @@ if status is-interactive
             set port $argv[1]
         end
 
-        if test (count $argv) -ge 2
-            set project_name $argv[2]
-        end
-
         if not string match -qr '^[0-9]+$' -- "$port"
-            echo "trycf: port must be numeric, got '$port'" >&2
+            echo "forward: port must be numeric, got '$port'" >&2
             return 1
         end
 
@@ -363,12 +367,12 @@ if status is-interactive
         )
 
         if test -z "$slug"
-            echo "trycf: project name '$project_name' does not produce a usable slug" >&2
+            echo "forward: project name '$project_name' does not produce a usable slug" >&2
             return 1
         end
 
         if not type -q cloudflared
-            echo 'trycf: cloudflared is not installed. Install it with: brew install cloudflared' >&2
+            echo 'forward: cloudflared is not installed. Install it with: brew install cloudflared' >&2
             return 127
         end
 
@@ -381,12 +385,11 @@ if status is-interactive
         set -l dev_url "$dev_base/$slug"
         set -l registered 0
 
-        echo "trycf: forwarding $origin"
-        echo "trycf: project slug $slug"
-        echo "trycf: dev alias $dev_url"
+        echo "forward: forwarding $origin"
+        echo "forward: project slug $slug"
 
         if not set -q TRYCF_REGISTER_URL
-            echo 'trycf: no TRYCF_REGISTER_URL set; printing the random trycloudflare.com URL only.'
+            echo 'forward: no alias registration configured'
         end
 
         command cloudflared tunnel --url "$origin" 2>&1 | while read -l line
@@ -402,11 +405,11 @@ if status is-interactive
             end
 
             set registered 1
-            echo "trycf: quick URL $quick_url"
+            echo "forward: quick URL $quick_url"
 
             if type -q pbcopy
                 printf '%s\n' "$quick_url" | pbcopy
-                echo 'trycf: copied quick URL to clipboard'
+                echo 'forward: copied quick URL to clipboard'
             end
 
             if not set -q TRYCF_REGISTER_URL
@@ -426,13 +429,13 @@ if status is-interactive
             set curl_args $curl_args --data "$payload" "$TRYCF_REGISTER_URL"
 
             if command curl $curl_args >/dev/null
-                echo "trycf: registered $dev_url -> $quick_url"
+                echo "forward: registered $dev_url -> $quick_url"
                 if type -q pbcopy
                     printf '%s\n' "$dev_url" | pbcopy
-                    echo 'trycf: copied dev alias to clipboard'
+                    echo 'forward: copied dev alias to clipboard'
                 end
             else
-                echo "trycf: failed to register $dev_url" >&2
+                echo "forward: failed to register $dev_url" >&2
             end
         end
     end
