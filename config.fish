@@ -377,25 +377,15 @@ if status is-interactive
         end
 
         set -l origin "http://localhost:$port"
-        set -l dev_base 'https://dev.hsichen.dev'
-        if set -q TRYCF_DEV_BASE
-            set dev_base (string trim --right --chars=/ -- "$TRYCF_DEV_BASE")
-        end
-
-        set -l dev_url "$dev_base/$slug"
-        set -l registered 0
+        set -l announced 0
 
         echo "forward: forwarding $origin"
         echo "forward: project slug $slug"
 
-        if not set -q TRYCF_REGISTER_URL
-            echo 'forward: no alias registration configured'
-        end
-
         command cloudflared tunnel --url "$origin" 2>&1 | while read -l line
             echo $line
 
-            if test "$registered" -eq 1
+            if test "$announced" -eq 1
                 continue
             end
 
@@ -404,38 +394,12 @@ if status is-interactive
                 continue
             end
 
-            set registered 1
+            set announced 1
             echo "forward: quick URL $quick_url"
 
             if type -q pbcopy
                 printf '%s\n' "$quick_url" | pbcopy
                 echo 'forward: copied quick URL to clipboard'
-            end
-
-            if not set -q TRYCF_REGISTER_URL
-                continue
-            end
-
-            set -l payload (
-                printf '{"project":"%s","target":"%s","origin":"%s"}' \
-                    "$slug" "$quick_url" "$origin"
-            )
-            set -l curl_args -fsS -X POST -H 'Content-Type: application/json'
-
-            if set -q TRYCF_REGISTER_TOKEN
-                set curl_args $curl_args -H "Authorization: Bearer $TRYCF_REGISTER_TOKEN"
-            end
-
-            set curl_args $curl_args --data "$payload" "$TRYCF_REGISTER_URL"
-
-            if command curl $curl_args >/dev/null
-                echo "forward: registered $dev_url -> $quick_url"
-                if type -q pbcopy
-                    printf '%s\n' "$dev_url" | pbcopy
-                    echo 'forward: copied dev alias to clipboard'
-                end
-            else
-                echo "forward: failed to register $dev_url" >&2
             end
         end
     end
