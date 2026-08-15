@@ -1,10 +1,4 @@
 if status is-interactive
-    # Open the general Fish alias config in VS Code.
-    abbr -a cf 'code /Users/hsi/.config/fish/aliases.fish'
-
-    # Open the Git-focused Fish alias config in VS Code.
-    abbr -a cfg 'code /Users/hsi/.config/fish/git-aliases.fish'
-
     # Kill Bun dev server processes started with either command form.
     abbr -a debun 'pkill -f "bun dev"; pkill -f "bun run dev"'
 
