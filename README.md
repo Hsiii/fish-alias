@@ -24,21 +24,6 @@ source /Users/hsi/.config/fish/aliases.fish
 
 `forward` defaults to port `3000`. It uses the Git repository name, even inside a linked worktree, or falls back to the current folder name outside Git. It starts a Cloudflare Quick Tunnel, prints the generated `trycloudflare.com` URL, and copies it to the clipboard. Install the dependency first with `brew install cloudflared`.
 
-`forward` also prepares a stable dev alias like `https://dev.hsichen.dev/homepage`. Set `TRYCF_REGISTER_URL` to a registrar endpoint if you want the function to POST the generated quick tunnel URL there:
-
-```fish
-set -Ux TRYCF_REGISTER_URL https://dev.hsichen.dev/__trycf/register
-set -Ux TRYCF_REGISTER_TOKEN your-token
-```
-
-The registrar receives:
-
-```json
-{"project":"homepage","target":"https://example.trycloudflare.com","origin":"http://localhost:3000"}
-```
-
-You can override the displayed stable base URL with `TRYCF_DEV_BASE`.
-
 `prmedia -a alice` prints the one-time credentials and creates
 `~/Downloads/pr-media-setup-alice.sh` with owner-only permissions. Send that
 file to your friend securely. They run it with Bash to install the credentials
