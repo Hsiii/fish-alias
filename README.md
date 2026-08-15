@@ -15,7 +15,7 @@ source /Users/hsi/.config/fish/aliases.fish
 ## Command Reference
 
 - `debun`: show and stop all Bun dev server processes
-- `dp`: switch to `main`, even when another worktree uses it, then deploy with Bun
+- `dp`: switch to `main`, fast-forward it from the remote, then deploy with Bun
 - `forward [port]`: expose a local dev server through Cloudflare Tunnel
 
 `forward` defaults to port `3000`. It uses the Git repository name, even inside a linked worktree, or falls back to the current folder name outside Git. It starts a Cloudflare Quick Tunnel, prints the generated `trycloudflare.com` URL, and copies it to the clipboard. Install the dependency first with `brew install cloudflared`.
