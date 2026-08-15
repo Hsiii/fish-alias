@@ -1,68 +1,24 @@
 if status is-interactive
     # Kill Bun dev server processes started with either command form.
-    abbr -a debun 'pkill -f "bun dev"; pkill -f "bun run dev"'
+    function debun --description 'Stop all Bun dev servers'
+        set -l pids (command pgrep -f '(^|[ /])bun( run)? dev([[:space:]]|$)')
+        set -l search_status $status
+
+        if test $search_status -eq 1
+            echo 'debun: no Bun dev servers found'
+            return 0
+        else if test $search_status -ne 0
+            return $search_status
+        end
+
+        for pid in $pids
+            command ps -p $pid -o pid= -o command=
+        end
+        command kill $pids
+    end
 
     # Deploy the current project with Bun.
-    abbr -a dp 'bun run deploy'
-
-    # Remove Codex worktrees registered to the current repository.
-    function detree
-        argparse 'f/force' -- $argv
-        or return
-
-        if test (count $argv) -gt 0
-            echo 'detree: expected no arguments' >&2
-            return 1
-        end
-
-        git rev-parse --git-dir >/dev/null 2>&1
-        or begin
-            echo 'detree: not inside a Git repository' >&2
-            return 1
-        end
-
-        set -l codex_home ~/.codex
-        if set -q CODEX_HOME
-            set codex_home $CODEX_HOME
-        end
-        set -l codex_worktree_root (path resolve $codex_home/worktrees)
-        if test -z "$codex_worktree_root"
-            echo 'detree: no Codex worktree directory found'
-            return 0
-        end
-
-        set -l codex_worktrees
-        for worktree in (git worktree list --porcelain | string match 'worktree *' | string replace 'worktree ' '')
-            if string match -q -- "$codex_worktree_root/*" "$worktree"
-                set -a codex_worktrees $worktree
-            end
-        end
-
-        if test (count $codex_worktrees) -eq 0
-            echo 'detree: no Codex worktrees for this repository'
-            return 0
-        end
-
-        set -l remove_args
-        if set -q _flag_force
-            set remove_args --force
-        end
-
-        set -l failed 0
-        for worktree in $codex_worktrees
-            echo "detree: removing $worktree"
-            git worktree remove $remove_args -- $worktree
-            or set failed 1
-        end
-
-        if test $failed -ne 0
-            if not set -q _flag_force
-                echo 'detree: some worktrees were kept; use --force to remove dirty worktrees' >&2
-            end
-        end
-
-        return $failed
-    end
+    abbr -a dp 'git switch --ignore-other-worktrees main; and bun run deploy'
 
     function __prmedia_add --description 'Create PR media access for a friend'
         if test (count $argv) -ne 1
@@ -481,105 +437,4 @@ if status is-interactive
         end
     end
 
-    function setcur --description 'Create or update a Projects/Current symlink by project folder name'
-        set -l projects_root /Users/hsi/Projects
-        set -l current_root $projects_root/Current
-
-        if test (count $argv) -ne 1
-            echo 'usage: setcur "Project folder Name"' >&2
-            return 1
-        end
-
-        set -l project_name $argv[1]
-        set -l target
-
-        if test -d "$project_name"
-            set target (realpath "$project_name")
-        else
-            set -l matches (
-                command find "$projects_root" \
-                    -path "$current_root" -prune -o \
-                    -path '*/.git' -prune -o \
-                    -type d -name "$project_name" -print | sort
-            )
-
-            if test (count $matches) -eq 0
-                echo "setcur: no project folder named '$project_name' under $projects_root" >&2
-                return 1
-            end
-
-            if test (count $matches) -gt 1
-                echo "setcur: multiple project folders named '$project_name':" >&2
-                printf '  %s\n' $matches >&2
-                return 1
-            end
-
-            set target $matches[1]
-        end
-
-        mkdir -p "$current_root"
-
-        set -l link "$current_root/"(basename "$target")
-        if test -e "$link"; and not test -L "$link"
-            echo "setcur: refusing to replace non-symlink $link" >&2
-            return 1
-        end
-
-        if test -L "$link"
-            rm "$link"
-        end
-
-        ln -s "$target" "$link"
-        echo "$link -> $target"
-    end
-
-    function decur --description 'Remove a Projects/Current symlink by project folder name'
-        set -l current_root /Users/hsi/Projects/Current
-
-        if test (count $argv) -ne 1
-            echo 'usage: decur "Project folder Name"' >&2
-            return 1
-        end
-
-        set -l project_name (basename "$argv[1]")
-        set -l link "$current_root/$project_name"
-
-        if test -L "$link"
-            rm "$link"
-            echo "removed $link"
-            return 0
-        end
-
-        if test -e "$link"
-            echo "decur: refusing to remove non-symlink $link" >&2
-        else
-            echo "decur: no current project symlink named '$project_name' at $link" >&2
-        end
-
-        return 1
-    end
-
-    function lscur --description 'List Projects/Current symlinks'
-        set -l current_root /Users/hsi/Projects/Current
-
-        if test (count $argv) -ne 0
-            echo 'usage: lscur' >&2
-            return 1
-        end
-
-        if not test -d "$current_root"
-            echo "lscur: no current project symlinks at $current_root"
-            return 0
-        end
-
-        set -l links (command find "$current_root" -mindepth 1 -maxdepth 1 -type l -print | sort)
-        if test (count $links) -eq 0
-            echo "lscur: no current project symlinks at $current_root"
-            return 0
-        end
-
-        for link in $links
-            echo (basename "$link")" -> "(readlink "$link")
-        end
-    end
 end

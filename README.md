@@ -14,16 +14,13 @@ source /Users/hsi/.config/fish/aliases.fish
 
 ## Command Reference
 
-- `debun`: kill Bun dev server processes started as `bun dev` or `bun run dev`
-- `detree`: remove Codex worktrees registered to the current repository; pass `--force` to include dirty worktrees
+- `debun`: show and stop all Bun dev server processes
+- `dp`: switch to `main`, even when another worktree uses it, then deploy with Bun
 - `prmedia -a name`: create a revocable PR-media token and setup script for a friend
 - `prmedia -d name`: revoke a friend's PR-media token
 - `prmedia -l`: list active PR-media token names
 - `media add <path>`: upload an image or short video for sharing and copy its URL
 - `trycf [port] [project-name]`: expose a local dev server through Cloudflare Tunnel
-- `setcur "Project folder Name"`: create or update a symlink at `/Users/hsi/Projects/Current/Project folder Name`
-- `decur "Project folder Name"`: remove a symlink at `/Users/hsi/Projects/Current/Project folder Name`
-- `lscur`: list symlinks under `/Users/hsi/Projects/Current`
 
 `trycf` defaults to port `3000` and the current folder name. It starts a Cloudflare Quick Tunnel, prints the generated `trycloudflare.com` URL, and copies it to the clipboard. Install the dependency first with `brew install cloudflared`.
 
@@ -62,10 +59,6 @@ up to 500 MiB; the public API's smaller limit is unchanged. Standalone media is
 unreferenced and may be evicted if the media filesystem reaches its cleanup
 watermark.
 
-`setcur` searches for an exact folder name under `/Users/hsi/Projects`, skips `/Users/hsi/Projects/Current`, and refuses to replace a real folder with a symlink.
-`decur` removes only symlinks under `/Users/hsi/Projects/Current` and refuses to remove real folders or files.
-`lscur` prints current project symlinks as `name -> target`.
-
 Examples:
 
 ```fish
@@ -75,9 +68,4 @@ prmedia -a alice
 prmedia -d alice
 prmedia -l
 media add ~/Downloads/demo.mov
-setcur Comux
-setcur "Project folder Name"
-setcur /Users/hsi/Projects/DevTools/fish-alias
-lscur
-decur Comux
 ```
