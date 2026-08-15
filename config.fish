@@ -18,7 +18,7 @@ if status is-interactive
     end
 
     # Deploy the current project with Bun.
-    abbr -a dp 'git switch --ignore-other-worktrees main; and bun run deploy'
+    abbr -a dp 'git switch --ignore-other-worktrees main; and git pull --ff-only; and bun run deploy'
 
     function forward --description 'Expose the current project with Cloudflare Tunnel'
         set -l port 3000
